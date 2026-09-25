@@ -27,6 +27,10 @@ Type: `JavaScript Module`
 
 Lalu gunakan YAML contoh di folder `examples/`.
 
+## Tambahkan melalui pemilih card
+
+Setelah card terpasang melalui HACS atau sebagai resource manual, buka dashboard dalam mode Edit, pilih **Add card**, lalu cari **Foxy PLTS Card**. Saat dipilih, konfigurasi YAML awal akan terisi otomatis sesuai contoh di `examples/dashboard.yaml` (tanpa perlu menyalinnya). Ganti semua `sensor.*` contoh dengan entity ID di Home Assistant Anda sebelum menyimpan. Jika baru memperbarui card dari versi sebelumnya, muat ulang halaman browser agar konfigurasi awal terbaru terbaca.
+
 ## Catatan sign convention
 
 - `grid.power > 0` = import dari PLN ke rumah
