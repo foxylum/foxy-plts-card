@@ -140,28 +140,37 @@ class FoxyPltsCard extends HTMLElement {
           }
           .wrap { padding:18px; }
           .title { font-size:16px; font-weight:700; letter-spacing:.08em; opacity:.9; margin-bottom:8px; }
-          .stage { position:relative; min-height:520px; }
-          svg.flowmap { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
-          .flow {
-            fill:none; stroke-width:5; stroke-linecap:round; opacity:.88;
-            stroke-dasharray:2 14; animation:dash 1.15s linear infinite;
+          .stage { display:flex; flex-direction:column; align-items:center; }
+          .middle {
+            display:grid; grid-template-columns:minmax(75px,1fr) minmax(14px,1fr) minmax(100px,1.1fr) minmax(14px,1fr) minmax(75px,1fr);
+            align-items:center; width:100%;
           }
-          .flow.off { animation:none; opacity:.24; }
-          .flow.reverse { animation-direction:reverse; }
-          @keyframes dash { to { stroke-dashoffset:-32; } }
-          .node {
-            position:absolute; transform:translate(-50%,-50%);
-            min-width:122px; text-align:center; z-index:2;
+          .link { color:var(--flow-color); opacity:.88; }
+          .link.off { opacity:.24; }
+          .link.vertical {
+            width:5px; height:75px; margin:auto;
+            background:radial-gradient(circle, currentColor 2px, transparent 2.5px) center top / 5px 14px repeat-y;
+            animation:flow-down 1.15s linear infinite;
           }
+          .link.horizontal {
+            height:5px; margin:0 4px;
+            background:radial-gradient(circle, currentColor 2px, transparent 2.5px) left center / 14px 5px repeat-x;
+            animation:flow-right 1.15s linear infinite;
+          }
+          .link.off { animation:none; }
+          .link.reverse { animation-direction:reverse; }
+          @keyframes flow-down { to { background-position:center 14px; } }
+          @keyframes flow-right { to { background-position:14px center; } }
+          @media (prefers-reduced-motion:reduce) { .link { animation:none !important; } }
+          .node { min-width:0; text-align:center; }
           .node .icon { font-size:38px; line-height:1; filter:drop-shadow(0 0 12px currentColor); }
           .node .value { font-size:21px; font-weight:800; margin-top:6px; }
           .node .sub { font-size:11px; opacity:.72; margin-top:3px; }
           .node .label { font-size:10px; letter-spacing:.14em; opacity:.62; margin-top:4px; }
-          .pv { left:50%; top:11%; color:${c.colors.pv}; }
-          .grid { left:11%; top:50%; color:${gridColor}; }
-          .inv { left:50%; top:50%; }
-          .load { left:89%; top:50%; color:${c.colors.load}; }
-          .bat { left:50%; top:84%; color:${batColor}; min-width:190px; }
+          .pv { color:${c.colors.pv}; }
+          .grid { color:${gridColor}; }
+          .load { color:${c.colors.load}; }
+          .bat { color:${batColor}; width:min(260px,100%); }
           .invbox {
             width:104px; height:104px; margin:auto;
             display:grid; place-items:center; border-radius:24px;
@@ -178,35 +187,30 @@ class FoxyPltsCard extends HTMLElement {
           .soc-track { height:6px; border-radius:99px; background:#20293a; overflow:hidden; margin:6px 0; }
           .soc-fill { height:100%; background:${batColor}; }
           @media (max-width:600px) {
-            .stage { min-height:470px; }
+            .middle { grid-template-columns:minmax(70px,1fr) minmax(12px,.5fr) minmax(90px,1fr) minmax(12px,.5fr) minmax(70px,1fr); }
             .node .value { font-size:17px; }
-            .node { min-width:100px; }
             .invbox { width:88px; height:88px; }
           }
         </style>
         <div class="wrap">
           <div class="title">${c.title || "Foxy PLTS"}</div>
           <div class="stage">
-            <svg class="flowmap" viewBox="0 0 1000 600" preserveAspectRatio="none">
-              <path class="flow ${pvActive ? "" : "off"}" d="M500 95 L500 270" stroke="${c.colors.pv}"/>
-              <path class="flow ${gridActive ? "" : "off"} ${gridDir === "reverse" ? "reverse":""}" d="M150 300 L440 300" stroke="${gridColor}"/>
-              <path class="flow ${loadActive ? "" : "off"}" d="M560 300 L850 300" stroke="${c.colors.load}"/>
-              <path class="flow ${batActive ? "" : "off"} ${batDir === "reverse" ? "reverse":""}" d="M500 360 L500 505" stroke="${batColor}"/>
-            </svg>
-
             <div class="node pv">
               <div class="icon">☀</div>
               <div class="value">${this._fmtPower(pv)}</div>
               <div class="sub">${this._fmt(c.pv?.voltage,"V",1)} · ${this._fmt(c.pv?.current,"A",1)}</div>
               <div class="label">SOLAR</div>
             </div>
+            <div class="link vertical ${pvActive ? "" : "off"}" style="--flow-color:${c.colors.pv}"></div>
 
+            <div class="middle">
             <div class="node grid">
               <div class="icon">⚡</div>
               <div class="value">${this._fmtPower(grid)}</div>
               <div class="sub">${this._fmt(c.grid?.voltage,"V",1)}</div>
               <div class="label">GRID</div>
             </div>
+            <div class="link horizontal ${gridActive ? "" : "off"} ${gridDir === "reverse" ? "reverse":""}" style="--flow-color:${gridColor}"></div>
 
             <div class="node inv">
               <div class="invbox">
@@ -218,12 +222,15 @@ class FoxyPltsCard extends HTMLElement {
               <div class="sub">${this._fmt(c.inverter?.voltage,"V",1)}</div>
               <div class="label">INVERTER</div>
             </div>
+            <div class="link horizontal ${loadActive ? "" : "off"}" style="--flow-color:${c.colors.load}"></div>
 
             <div class="node load">
               <div class="icon">⌂</div>
               <div class="value">${this._fmtPower(load)}</div>
               <div class="label">LOAD</div>
             </div>
+            </div>
+            <div class="link vertical ${batActive ? "" : "off"} ${batDir === "reverse" ? "reverse":""}" style="--flow-color:${batColor}"></div>
 
             <div class="node bat">
               <div class="icon">▣</div>
