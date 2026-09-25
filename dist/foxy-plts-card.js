@@ -1,4 +1,41 @@
 class FoxyPltsCard extends HTMLElement {
+  static getStubConfig() {
+    return {
+      title: "Foxy PLTS",
+      pv: {
+        power: "sensor.pv_power",
+        voltage: "sensor.pv_voltage",
+        current: "sensor.pv_current",
+      },
+      grid: {
+        power: "sensor.grid_power",
+        voltage: "sensor.grid_voltage",
+      },
+      inverter: {
+        power: "sensor.inverter_output_power",
+        voltage: "sensor.inverter_output_voltage",
+      },
+      load: { power: "sensor.load_power" },
+      batteries: [
+        {
+          name: "Battery 1",
+          soc: "sensor.jk_bms_1_soc",
+          voltage: "sensor.jk_bms_1_voltage",
+          current: "sensor.jk_bms_1_current",
+          power: "sensor.jk_bms_1_power",
+        },
+        {
+          name: "Battery 2",
+          soc: "sensor.jk_bms_2_soc",
+          voltage: "sensor.jk_bms_2_voltage",
+          current: "sensor.jk_bms_2_current",
+          power: "sensor.jk_bms_2_power",
+        },
+      ],
+      thresholds: { active_w: 10 },
+    };
+  }
+
   setConfig(config) {
     if (!config) throw new Error("Invalid configuration");
     this.config = {
@@ -209,5 +246,6 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "foxy-plts-card",
   name: "Foxy PLTS Card",
-  description: "Animated solar, grid, inverter, load and battery energy flow card."
+  description: "Animated solar, grid, inverter, load and battery energy flow card.",
+  documentationURL: "https://github.com/foxylum/foxy-plts-card"
 });
