@@ -1,4 +1,48 @@
 class FoxyPltsCard extends HTMLElement {
+  connectedCallback() {
+    this.addEventListener("click", this._onEntityClick);
+    this.addEventListener("keydown", this._onEntityKeydown);
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener("click", this._onEntityClick);
+    this.removeEventListener("keydown", this._onEntityKeydown);
+  }
+
+  _onEntityClick = (event) => {
+    this._showEntity(event.target?.closest?.("[data-entity]"));
+  };
+
+  _onEntityKeydown = (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const target = event.target?.closest?.("[data-entity]");
+    if (!target) return;
+    event.preventDefault();
+    this._showEntity(target);
+  };
+
+  _showEntity(target) {
+    const entityId = target?.dataset?.entity;
+    if (!entityId) return;
+    this.dispatchEvent(new CustomEvent("hass-more-info", {
+      detail: { entityId },
+      bubbles: true,
+      composed: true,
+    }));
+  }
+
+  _entityId(entity) {
+    return typeof entity === "string" && /^[a-z0-9_]+\.[a-z0-9_]+$/.test(entity)
+      ? entity : "";
+  }
+
+  _entity(entity, content, className = "") {
+    const id = this._entityId(entity);
+    return `<span class="${className}${id ? " entity-link" : ""}"${id
+      ? ` data-entity="${id}" role="button" tabindex="0" title="Detail ${id}"`
+      : ""}>${content}</span>`;
+  }
+
   static getStubConfig() {
     return {
       title: "Foxy PLTS",
@@ -90,14 +134,14 @@ class FoxyPltsCard extends HTMLElement {
     return `
       <div class="battery-mini">
         <div class="battery-head">
-          <span>${b.name || `Battery ${i+1}`}</span>
-          <strong>${soc.toFixed(0)}%</strong>
+          ${this._entity(b.soc || b.power, b.name || `Battery ${i+1}`)}
+          ${this._entity(b.soc, `${soc.toFixed(0)}%`, "battery-soc")}
         </div>
-        <div class="soc-track"><div class="soc-fill" style="width:${Math.max(0, Math.min(100, soc))}%"></div></div>
+        ${this._entity(b.soc, `<span class="soc-track"><span class="soc-fill" style="width:${Math.max(0, Math.min(100, soc))}%"></span></span>`, "battery-bar")}
         <div class="battery-metrics">
-          <span>${this._fmtPower(power)}</span>
-          <span>${voltage}</span>
-          <span>${current}</span>
+          ${this._entity(b.power, this._fmtPower(power))}
+          ${this._entity(b.voltage, voltage)}
+          ${this._entity(b.current, current)}
         </div>
       </div>
     `;
@@ -167,6 +211,11 @@ class FoxyPltsCard extends HTMLElement {
           .node .value { font-size:21px; font-weight:800; margin-top:6px; }
           .node .sub { font-size:11px; opacity:.72; margin-top:3px; }
           .node .label { font-size:10px; letter-spacing:.14em; opacity:.62; margin-top:4px; }
+          .entity-link { cursor:pointer; border-radius:4px; }
+          .entity-link:hover { text-decoration:underline; }
+          .entity-link:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
+          .node .icon.entity-link, .node .value.entity-link { display:block; }
+          .battery-soc { font-weight:700; }
           .pv { color:${c.colors.pv}; }
           .grid { color:${gridColor}; }
           .load { color:${c.colors.load}; }
@@ -184,8 +233,9 @@ class FoxyPltsCard extends HTMLElement {
             border-radius:12px; padding:8px 10px; text-align:left;
           }
           .battery-head, .battery-metrics { display:flex; justify-content:space-between; gap:8px; font-size:11px; }
-          .soc-track { height:6px; border-radius:99px; background:#20293a; overflow:hidden; margin:6px 0; }
-          .soc-fill { height:100%; background:${batColor}; }
+          .battery-bar { display:block; padding:6px 0; }
+          .soc-track { display:block; height:6px; border-radius:99px; background:#20293a; overflow:hidden; }
+          .soc-fill { display:block; height:100%; background:${batColor}; }
           @media (max-width:600px) {
             .middle { grid-template-columns:minmax(70px,1fr) minmax(12px,.5fr) minmax(90px,1fr) minmax(12px,.5fr) minmax(70px,1fr); }
             .node .value { font-size:17px; }
@@ -196,18 +246,18 @@ class FoxyPltsCard extends HTMLElement {
           <div class="title">${c.title || "Foxy PLTS"}</div>
           <div class="stage">
             <div class="node pv">
-              <div class="icon">☀</div>
-              <div class="value">${this._fmtPower(pv)}</div>
-              <div class="sub">${this._fmt(c.pv?.voltage,"V",1)} · ${this._fmt(c.pv?.current,"A",1)}</div>
+              ${this._entity(c.pv?.power, "☀", "icon")}
+              ${this._entity(c.pv?.power, this._fmtPower(pv), "value")}
+              <div class="sub">${this._entity(c.pv?.voltage, this._fmt(c.pv?.voltage,"V",1))} · ${this._entity(c.pv?.current, this._fmt(c.pv?.current,"A",1))}</div>
               <div class="label">SOLAR</div>
             </div>
             <div class="link vertical ${pvActive ? "" : "off"}" style="--flow-color:${c.colors.pv}"></div>
 
             <div class="middle">
             <div class="node grid">
-              <div class="icon">⚡</div>
-              <div class="value">${this._fmtPower(grid)}</div>
-              <div class="sub">${this._fmt(c.grid?.voltage,"V",1)}</div>
+              ${this._entity(c.grid?.power, "⚡", "icon")}
+              ${this._entity(c.grid?.power, this._fmtPower(grid), "value")}
+              <div class="sub">${this._entity(c.grid?.voltage, this._fmt(c.grid?.voltage,"V",1))}</div>
               <div class="label">GRID</div>
             </div>
             <div class="link horizontal ${gridActive ? "" : "off"} ${gridDir === "reverse" ? "reverse":""}" style="--flow-color:${gridColor}"></div>
@@ -215,25 +265,25 @@ class FoxyPltsCard extends HTMLElement {
             <div class="node inv">
               <div class="invbox">
                 <div>
-                  <div class="icon">⟳</div>
-                  <div class="value">${this._fmtPower(inv || load)}</div>
+                  ${this._entity(c.inverter?.power || c.load?.power, "⟳", "icon")}
+                  ${this._entity(c.inverter?.power || c.load?.power, this._fmtPower(c.inverter?.power ? inv : load), "value")}
                 </div>
               </div>
-              <div class="sub">${this._fmt(c.inverter?.voltage,"V",1)}</div>
+              <div class="sub">${this._entity(c.inverter?.voltage, this._fmt(c.inverter?.voltage,"V",1))}</div>
               <div class="label">INVERTER</div>
             </div>
             <div class="link horizontal ${loadActive ? "" : "off"}" style="--flow-color:${c.colors.load}"></div>
 
             <div class="node load">
-              <div class="icon">⌂</div>
-              <div class="value">${this._fmtPower(load)}</div>
+              ${this._entity(c.load?.power, "⌂", "icon")}
+              ${this._entity(c.load?.power, this._fmtPower(load), "value")}
               <div class="label">LOAD</div>
             </div>
             </div>
             <div class="link vertical ${batActive ? "" : "off"} ${batDir === "reverse" ? "reverse":""}" style="--flow-color:${batColor}"></div>
 
             <div class="node bat">
-              <div class="icon">▣</div>
+              ${this._entity(c.battery_bank?.soc || bats[0]?.soc, "▣", "icon")}
               <div class="value">${totalSoc.toFixed(0)}%</div>
               <div class="sub">${this._fmtPower(batPower)}</div>
               <div class="label">BATTERY BANK</div>
