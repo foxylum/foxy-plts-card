@@ -39,3 +39,7 @@ Setelah card terpasang melalui HACS atau sebagai resource manual, buka dashboard
 - `battery.power < 0` = discharging
 
 Kalau sensor Anda memakai tanda kebalikan, buat template sensor di Home Assistant atau akan ditambahkan opsi invert pada rilis berikutnya.
+
+## Detail sensor dengan klik
+
+Klik ikon atau angka daya PV, grid, inverter, dan load untuk membuka dialog detail entity Home Assistant. Angka tegangan, arus, SOC, daya, dan bar SOC tiap baterai membuka detail sensor masing-masing. Ikon battery bank membuka detail SOC baterai pertama, atau sensor `battery_bank.soc` jika Anda mengaturnya. Angka SOC rata-rata dan total daya bank merupakan hasil hitung card, sehingga tidak memiliki dialog entity tersendiri. Semua nilai yang bisa diklik juga bisa dibuka dengan Enter atau spasi saat dipilih melalui keyboard.
